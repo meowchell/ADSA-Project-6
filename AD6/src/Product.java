@@ -21,22 +21,22 @@ public class Product {
 		this.name = name;
 	}
 
-	public double getPrice() {
+	public float getPrice() {
 		return price;
 	}
 
-	public void setPrice(double price) {
+	public void setPrice(float price) {
 		this.price = price;
 	}
 
 	long[] name;
-	double price;
+	float price;
 
 	public Product() {
 
 	}
 
-	public Product(long id, long[] name, double price) {
+	public Product(long id, long[] name, float price) {
 		super();
 		this.id = id;
 		this.name = name;
