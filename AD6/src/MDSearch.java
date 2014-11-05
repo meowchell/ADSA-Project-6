@@ -31,12 +31,16 @@ public class MDSearch {
 			return 1;
 		} else {// update
 			if (name.length == 0) {
-				updateInPriceMapPriceOnly(product);//update priceMap
+				float oldPrice = product.getPrice();
 				product.setPrice(price);
+				updateInPriceMapPriceOnly(product,oldPrice);//update priceMap
+				
 			} else {
-				updateInPriceMapAll(product);//update priceMap
+				float oldPrice = product.getPrice();
+				long[] oldName = product.getName();
 				product.setName(name);
 				product.setPrice(price);
+				updateInPriceMapAll(product,oldPrice,oldName);//update priceMap				
 			}
 			return 0;
 		}
@@ -68,14 +72,14 @@ public class MDSearch {
 	}
 
 	public static void deleteInPriceMap(Product product) {
-		long[] key = product.getName();
+		Product oldProduct = (Product) idTree.get(product.getId());
+		long[] key = oldProduct.getName();
 		for (int i = 0; i < key.length; i++) {
 			AbstractSparseArray asa = priceMap.get(key[i]);
 			if (asa == null) {
 				throw new RuntimeException("no such map");
 			} else {
-				float oldPrice = ((Product) (idTree.get(product.getId())))
-						.getPrice();
+				float oldPrice = oldProduct.getPrice();
 				Object getObject = asa.get((long) (100 * oldPrice));
 				if (getObject instanceof ArrayList) {// there are duplicate
 														// prices
@@ -104,6 +108,77 @@ public class MDSearch {
 			}
 		}
 	}
+	
+	public static void deleteInPriceMap(Product product,float oldPrice) {
+		long[] key = product.getName();
+		for (int i = 0; i < key.length; i++) {
+			AbstractSparseArray asa = priceMap.get(key[i]);
+			if (asa == null) {
+				throw new RuntimeException("no such map");
+			} else {
+				Object getObject = asa.get((long) (100 * oldPrice));
+				if (getObject instanceof ArrayList) {// there are duplicate
+														// prices
+					ArrayList<Product> list = (ArrayList<Product>) getObject;
+					Product delete = null;
+					boolean turnToSingle = false;
+					if (list.size() == 2) {// after deletion, it will become a
+											// plain node
+						turnToSingle = true;
+					}
+					for (Product possibleProduct : list) {
+						if (possibleProduct.getId() == product.getId()) {
+							delete = possibleProduct;
+							break;
+						}
+					}
+					list.remove(delete);
+					if (turnToSingle) {
+						list = (ArrayList<Product>) asa
+								.remove((long) (100 * oldPrice));
+						insertInPriceMap(list.get(0),key[i]);
+					}
+				} else {// it is a plain node
+					asa.remove((long) (100 * oldPrice));
+				}
+			}
+		}
+	}
+	
+	public static void deleteInPriceMap(Product product,float oldPrice,long[]oldName) {
+		for (int i = 0; i < oldName.length; i++) {
+			AbstractSparseArray asa = priceMap.get(oldName[i]);
+			if (asa == null) {
+				throw new RuntimeException("no such map");
+			} else {
+				Object getObject = asa.get((long) (100 * oldPrice));
+				if (getObject instanceof ArrayList) {// there are duplicate
+														// prices
+					ArrayList<Product> list = (ArrayList<Product>) getObject;
+					Product delete = null;
+					boolean turnToSingle = false;
+					if (list.size() == 2) {// after deletion, it will become a
+											// plain node
+						turnToSingle = true;
+					}
+					for (Product possibleProduct : list) {
+						if (possibleProduct.getId() == product.getId()) {
+							delete = possibleProduct;
+							break;
+						}
+					}
+					list.remove(delete);
+					if (turnToSingle) {
+						list = (ArrayList<Product>) asa
+								.remove((long) (100 * oldPrice));
+						insertInPriceMap(list.get(0),oldName[i]);
+					}
+				} else {// it is a plain node
+					asa.remove((long) (100 * oldPrice));
+				}
+			}
+		}
+	}
 
 	/**
 	 * Note: For priceMap, the update is simply delete the old 
@@ -114,7 +189,16 @@ public class MDSearch {
 	public static void updateInPriceMapPriceOnly(Product product) {
 		 long []name = ((Product) (idTree.get(product.getId())))
 			.getName();
-		deleteInPriceMap(product);//delet with the old name sets
+		deleteInPriceMap(product);//delete with the old name sets
+		for (int i = 0; i < name.length; i++) {
+			insertInPriceMap(product, name[i]);
+		}		
+	}
+	
+	public static void updateInPriceMapPriceOnly(Product product,float oldPrice) {
+		 long []name = ((Product) (idTree.get(product.getId())))
+			.getName();
+		deleteInPriceMap(product,oldPrice);//delete with the old name sets
 		for (int i = 0; i < name.length; i++) {
 			insertInPriceMap(product, name[i]);
 		}		
@@ -153,6 +237,14 @@ public class MDSearch {
 				.getName();
 		product.setName(name);
 		deleteInPriceMap(product);//delete with old name
+		for (int i = 0; i < key.length; i++) {//insert with new name group
+			insertInPriceMap(product, key[i]);
+		}
+	}
+	
+	public static void updateInPriceMapAll(Product product, float oldPrice,long[]oldName){
+		long[] key = product.getName();
+		deleteInPriceMap(product,oldPrice,oldName);//delete with old name
 		for (int i = 0; i < key.length; i++) {//insert with new name group
 			insertInPriceMap(product, key[i]);
 		}
