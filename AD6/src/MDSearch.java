@@ -3,6 +3,7 @@ import java.util.HashMap;
 
 import com.tangosol.dev.assembler.If_acmpeq;
 import com.tangosol.util.*;
+import com.tangosol.util.LongArray.Iterator;
 
 public class MDSearch {
 
@@ -260,8 +261,26 @@ public class MDSearch {
 
 	}
 
-	public static void findPriceRange(long n, int low, int high) {
-
+	public static long findPriceRange(long n, int low, int high) {
+		long result = 0L;
+		AbstractSparseArray asa=priceMap.get(n);
+		Iterator i=asa.iterator();
+		while (i.hasNext()) {
+			Object nextObject = i.next();
+			float price = i.getIndex()/100;
+			if (price>high) {
+				break;
+			}
+			if (price>=low&&price<=high) {
+				if (nextObject instanceof ArrayList) {
+					ArrayList<Product> list= (ArrayList<Product>) nextObject;
+					result+=list.size();
+				}else {
+					result+=1;
+				}
+			}			
+		}
+		return result;
 	}
 
 	public static void priceHike(long l, long h, int high) {
