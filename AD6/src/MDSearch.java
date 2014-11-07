@@ -253,12 +253,18 @@ public class MDSearch {
 
 
 
-	public static void findMinPrice(long w) {
-
+	public static float findMinPrice(long w) {
+		AbstractSparseArray asa = priceMap.get(w);
+		long first = asa.getFirstIndex();
+		float result = first/100;
+		return result;
 	}
 
-	public static void findMaxPrice(long w) {
-
+	public static float findMaxPrice(long w) {
+		AbstractSparseArray asa = priceMap.get(w);
+		long last = asa.getLastIndex();
+		float result = last/100;
+		return result;
 	}
 
 	public static long findPriceRange(long n, int low, int high) {
@@ -283,8 +289,26 @@ public class MDSearch {
 		return result;
 	}
 
-	public static void priceHike(long l, long h, int high) {
-
+	public static float priceHike(long l, long h, int percentage) {
+		float sum = 0f;
+		long firstExist = 0L;
+		for(long tempt =l;tempt<=h;tempt++){
+			if (idTree.exists(tempt)) {
+				firstExist = tempt;
+				break;
+			}
+		}
+		LongArray.Iterator iterator = idTree.iterator(firstExist);
+		while (iterator.hasNext()) {
+			Product object = (Product) iterator.next();
+			float oldPrice = object.getPrice();
+			float offset = Float.parseFloat(String.format("%2f", oldPrice*(percentage/100.0f)));
+			sum+=offset;
+			object.setPrice(oldPrice+offset);
+			updateInPriceMapPriceOnly(object, oldPrice);
+		}
+		
+		return sum;
 	}
 
 	public static void updateMap() {
